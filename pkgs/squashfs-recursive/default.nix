@@ -1,10 +1,10 @@
-{ runCommand, nixUnstable, jq, path }:
+{ runCommand, nix, jq, path }:
 let
   map-squash = ./map-squash.nix;
 
   mkSquashfsManifest = { name, storeContents, reverse ? false }:
     runCommand "${name}-squashfs-manifest" {
-      buildInputs = [ nixUnstable jq ];
+      buildInputs = [ nix jq ];
       requiredSystemFeatures = [ "recursive-nix" ];
       exportReferencesGraph = [ "root" storeContents ];
       NIX_PATH = "nixpkgs=${path}";
