@@ -8,6 +8,8 @@
     nix = nixUnstable;
   };
 
+  makePxeScript = callPackage ./pxescript {};
+
   makeSquashfsManifest = callPackage ./squashfs-recursive {
     # nixUnstable may not be required. Todo: revisit (2020-05-25)
     nix = nixUnstable;
