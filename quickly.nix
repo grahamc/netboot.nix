@@ -46,13 +46,14 @@ in
       mkdir -p /mnt-root/nix/.squash
       mkdir -p /mnt-root/nix/store
 
+      gunzip < /nix-store-squashes/registration.gz > /mnt-root/nix/registration
+
       # the manifest splits the /nix/store/.... path with a " " to
       # prevent Nix from determining it depends on things.
-      for f in $(cat /nix-store-isos | sed 's/ //'); do
+      for f in $(cat /nix-store-squashes/squashes | sed 's/ //'); do
         prefix=$(basename "$(dirname "$f")")
         suffix=$(basename "$f")
         dest="$prefix$suffix"
-        echo "$dest"
         mkdir "/mnt-root/nix/.squash/$dest"
         mount -t squashfs -o loop "$f" "/mnt-root/nix/.squash/$dest"
         (
@@ -63,10 +64,6 @@ in
         rm "$f"
         set +x
       done
-
-      ls -la /mnt-root/nix/store | grep system-nixos
-      ls -la /mnt-root/nix/store/*-nixos-system*/
-      ls -la /mnt-root/nix/store/*-nixos-system*/*
       )
     '';
 
@@ -103,7 +100,7 @@ in
             [
               {
                 object = config.system.build.squashfsStore.manifest;
-                symlink = "/nix-store-isos";
+                symlink = "/nix-store-squashes";
               }
             ];
         }}/initrd";
@@ -116,7 +113,8 @@ in
       ''
         # After booting, register the contents of the Nix store
         # in the Nix database in the tmpfs.
-        ${config.nix.package}/bin/nix-store --load-db < /nix/store/nix-path-registration
+        echo "Loading the Nix database"
+        ${config.nix.package}/bin/nix-store --load-db < /nix/registration
 
         # nixos-rebuild also requires a "system" profile and an
         # /etc/NIXOS tag.

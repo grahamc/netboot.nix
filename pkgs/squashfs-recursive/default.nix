@@ -1,4 +1,4 @@
-{ runCommand, nix, jq, path }:
+{ closureInfo, runCommand, nix, jq, path }:
 let
   map-squash = ./map-squash.nix;
 
@@ -9,6 +9,7 @@ let
       exportReferencesGraph = [ "root" storeContents ];
       NIX_PATH = "nixpkgs=${path}";
       outputs = [ "out" "manifest" ];
+      closureInfo = closureInfo { rootPaths = storeContents; };
     } ''
       cat root | grep /nix/store | sort | uniq | jq -R . | jq -s . > paths.json
       nix-build ${map-squash} --arg pathsJson ./paths.json
@@ -18,12 +19,15 @@ let
         find "$f" -type f >> $out
       done
 
-      touch $manifest
+      mkdir $manifest
+      touch $manifest/squashes
       for f in $(cat "$out"); do
         prefix=$(echo "$f" | head -c20)
         suffix=$(echo "$f" | tail -c+21)
-        echo "$prefix $suffix" >> $manifest
+        echo "$prefix $suffix" >> $manifest/squashes
       done
+
+      cat $closureInfo/registration | gzip -9 > $manifest/registration.gz
     '';
 in
 mkSquashfsManifest
