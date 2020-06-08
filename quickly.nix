@@ -45,12 +45,11 @@ in
 
     # In stage 1, mount a tmpfs on top of /nix/store (the squashfs
     # image) to make this a live CD.
-    fileSystems."/nix" =
-      {
-        fsType = "tmpfs";
-        options = [ "mode=0755" ];
-        neededForBoot = true;
-      };
+    fileSystems."/nix" = {
+      fsType = "tmpfs";
+      options = [ "mode=0755" ];
+      neededForBoot = true;
+    };
 
     boot.initrd.postMountCommands = ''
       echo "Mounting initial store"
