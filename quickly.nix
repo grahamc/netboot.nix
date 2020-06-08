@@ -48,14 +48,18 @@ in
 
       for f in $(rev /nix-store-isos); do
         dest=$(basename "$f" | rev)
+        echo "$dest"
         mkdir "/mnt-root/nix/.squash/$dest"
         mount -t squashfs -o loop "$f" "/mnt-root/nix/.squash/$dest"
         (
           cd /mnt-root/nix/store/
-          ln -s "../.squash/$dest/$dest" "./$dest"
+          cp -ar "../.squash/$dest/$dest" "./$dest"
         )
+        umount "/mnt-root/nix/.squash/$dest"
+        rm "$f"
         set +x
       done
+
       ls -la /mnt-root/nix/store | grep system-nixos
       ls -la /mnt-root/nix/store/*-nixos-system*/
       ls -la /mnt-root/nix/store/*-nixos-system*/*

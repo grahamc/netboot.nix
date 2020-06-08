@@ -22,7 +22,7 @@ let
 
       machineConfig = pythonDict (
         {
-          qemuFlags = "-boot order=n -m 2000";
+          qemuFlags = "-boot order=n -m 4000";
           netBackendArgs = "tftp=${config.system.build.ipxeBootDir},bootfile=netboot.ipxe";
         } // extraConfig
       );
