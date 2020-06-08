@@ -1,4 +1,4 @@
-{ reverse ? false, pathsJson, pkgs ? import <nixpkgs> {} }:
+{ pathsJson, pkgs ? import <nixpkgs> {} }:
 let
   namePart = strPath:
     let
@@ -12,7 +12,9 @@ let
     buildInputs = [ pkgs.squashfsTools pkgs.utillinux ];
   } ''
     mkdir $out
-    revout=$(echo "$(basename ${strPath})" | rev)
+    dirname=$(echo "$(basename ${strPath})" | head -c8)
+    filename=$(echo "$(basename ${strPath})" | tail -c+9)
+
     mksquashfs \
       "${builtins.storePath strPath}" \
       ./result \
@@ -20,11 +22,8 @@ let
       -keep-as-directory \
       -all-root
 
-    if ${if reverse then "true" else "false"}; then
-      tac result > result.rev
-      mv result.rev result
-    fi
-    mv result "$out/$revout"
+    mkdir -p "$out/$dirname"
+    mv result "$out/$dirname/$filename"
   '';
 in
 pkgs.writeText "squashes" (pkgs.lib.concatMapStringsSep "\n" mksquash paths)

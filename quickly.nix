@@ -46,8 +46,12 @@ in
       mkdir -p /mnt-root/nix/.squash
       mkdir -p /mnt-root/nix/store
 
-      for f in $(rev /nix-store-isos); do
-        dest=$(basename "$f" | rev)
+      # the manifest splits the /nix/store/.... path with a " " to
+      # prevent Nix from determining it depends on things.
+      for f in $(cat /nix-store-isos | sed 's/ //'); do
+        prefix=$(basename "$(dirname "$f")")
+        suffix=$(basename "$f")
+        dest="$prefix$suffix"
         echo "$dest"
         mkdir "/mnt-root/nix/.squash/$dest"
         mount -t squashfs -o loop "$f" "/mnt-root/nix/.squash/$dest"
@@ -80,6 +84,12 @@ in
       inherit config pkgs;
       initrds = {
         initrd = "${config.system.build.initialRamdisk}/initrd";
+
+        # squashfsStore is just a manifest file, and makeCpioRecursive
+        # will bring in all its dependencies automatically.
+        # the nix-store initrd is the actual files, and the manifest
+        # is intentionally only just the manifest file, located
+        # at /nix-store-isos
         nix-store = "${(
           netbootpkgs.makeCpioRecursive {
             name = "better-initrd";
@@ -92,9 +102,7 @@ in
           contents =
             [
               {
-                object = pkgs.runCommand "nix-store-isos-reversed" {} ''
-                  ${pkgs.utillinux}/bin/rev ${config.system.build.squashfsStore} > $out
-                '';
+                object = config.system.build.squashfsStore.manifest;
                 symlink = "/nix-store-isos";
               }
             ];
