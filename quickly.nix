@@ -76,14 +76,14 @@ in
       inherit config pkgs;
       initrds = {
         initrd = "${config.system.build.initialRamdisk}/initrd";
-        squashes = "${(
+        nix-store = "${(
           netbootpkgs.makeCpioRecursive {
             name = "better-initrd";
             inherit (config.boot.initrd) compressor;
             root = config.system.build.squashfsStore;
           }
         )}/initrd";
-        squashmanifest = "${pkgs.makeInitrd {
+        manifest = "${pkgs.makeInitrd {
           inherit (config.boot.initrd) compressor;
           contents =
             [
