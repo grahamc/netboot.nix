@@ -14,6 +14,10 @@ Also, the future should include tests in this repo.
   Initial testing reduced build time from 5-10 minutes per image to
   15-30 seconds.
 
+  The `./size-test/build.sh` test is able to build an incremental
+  netboot image in just 12 seconds, and the initrd is not rebuilt.
+
+
 ## Setting up recursive nix
 
 Setting up recursive Nix requires support on the build machine:
