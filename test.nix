@@ -34,6 +34,8 @@ let
           machine = create_machine(${machineConfig})
           machine.start()
           machine.wait_for_unit("multi-user.target")
+          machine.succeed("nix-collect-garbage")
+          machine.succeed("nix-channel --list")
           machine.shutdown()
         '';
       };
