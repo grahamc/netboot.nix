@@ -15,6 +15,7 @@ runCommand "netboot" {
     initrd initrd
     boot
   '';
+  preferLocalBuild = true;
 } ''
   mkdir stage
   cd stage
