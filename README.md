@@ -18,6 +18,17 @@ Also, the future should include tests in this repo.
   netboot image in just 12 seconds, and the initrd is not rebuilt.
 
 
+## How to Use
+
+First set up recursive nix on your builder. Then:
+
+```
+$ nix-build '<nixpkgs/nixos>' -I nixos-config=./size-test/base.nix -A config.system.build.ipxeBootDir
+```
+
+and boot off of `./result/netboot.ipxe`. The initial build may take
+a few minutes, but subsequent builds will only take a few seconds.
+
 ## Setting up recursive nix
 
 Setting up recursive Nix requires support on the build machine:
