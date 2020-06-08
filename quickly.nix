@@ -3,7 +3,10 @@
 
 { config, lib, pkgs, ... }:
 
-with lib;
+let
+  inherit (lib) mkOption literalExample;
+  netbootpkgs = pkgs.callPackage ./pkgs {};
+in
 
 {
   options = {
@@ -81,11 +84,10 @@ with lib;
       [ config.system.build.toplevel ];
 
     # Create the squashfs image that contains the Nix store.
-    system.build.squashfsStore = pkgs.makeSquashes {
+    system.build.squashfsStore = netbootpkgs.makeSquashfsManifest {
       name = "iso-manifeiist";
       storeContents = config.netboot.storeContents;
     };
-
 
     # Create the initrd
     system.build.netbootRamdisk = pkgs.makeInitrd {
@@ -93,8 +95,9 @@ with lib;
       prepend = [
         "${config.system.build.initialRamdisk}/initrd"
         "${(
-          pkgs.makeBetterInitrd {
+          netbootpkgs.makeCpioRecursive {
             name = "better-initrd";
+            inherit (config.boot.initrd) compressor;
             root = config.system.build.squashfsStore;
           }
         )}/initrd"
@@ -117,6 +120,15 @@ with lib;
       initrd initrd
       boot
     '';
+
+    system.build.ipxeBootDir = pkgs.symlinkJoin {
+      name = "ipxeBootDir";
+      paths = [
+        config.system.build.netbootRamdisk
+        config.system.build.kernel
+        config.system.build.netbootIpxeScript
+      ];
+    };
 
     boot.loader.timeout = 10;
 
