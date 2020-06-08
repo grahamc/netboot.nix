@@ -57,6 +57,12 @@ in
         mkdir "/mnt-root/nix/.squash/$dest"
         mount -t squashfs -o loop "$f" "/mnt-root/nix/.squash/$dest"
         (
+          # Ideally, these would not be copied and the mounts would be
+          # used directly. However, we can't: systemd tries to unmount
+          # them all at shutdown and gets stuck. The trade-off here is
+          # an increased RAM requirement and a slightly slower
+          # start-up. However, all that is much faster than needing
+          # to recreate the entire squashfs every time.
           cd /mnt-root/nix/store/
           cp -ar "../.squash/$dest/$dest" "./$dest"
         )
