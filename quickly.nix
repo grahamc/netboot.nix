@@ -9,18 +9,6 @@ let
 in
 
 {
-  options = {
-
-    netboot.storeContents = mkOption {
-      example = literalExample "[ pkgs.stdenv ]";
-      description = ''
-        This option lists additional derivations to be included in the
-        Nix store in the generated netboot image.
-      '';
-    };
-
-  };
-
   config = {
     # Don't build the GRUB menu builder script, since we don't need it
     # here and it causes a cyclic dependency.
@@ -77,56 +65,37 @@ in
     boot.initrd.availableKernelModules = [ "squashfs" "overlay" ];
     boot.initrd.kernelModules = [ "loop" "overlay" ];
 
-    # Closures to be copied to the Nix store, namely the init
-    # script and the top-level system configuration directory.
-    netboot.storeContents =
-      [ config.system.build.toplevel ];
 
     # Create the squashfs image that contains the Nix store.
     system.build.squashfsStore = netbootpkgs.makeSquashfsManifest {
-      name = "iso-manifeiist";
-      storeContents = config.netboot.storeContents;
+      name = "iso-manifest";
+      storeContents = config.system.build.toplevel;
     };
 
-    # Create the initrd
-    system.build.netbootRamdisk = pkgs.makeInitrd {
-      inherit (config.boot.initrd) compressor;
-      prepend = [
-        "${config.system.build.initialRamdisk}/initrd"
-        "${(
+    system.build.ipxeBootDir = netbootpkgs.makePxeScript {
+      inherit config pkgs;
+      initrds = {
+        initrd = "${config.system.build.initialRamdisk}/initrd";
+        squashes = "${(
           netbootpkgs.makeCpioRecursive {
             name = "better-initrd";
             inherit (config.boot.initrd) compressor;
             root = config.system.build.squashfsStore;
           }
-        )}/initrd"
-      ];
-
-      contents =
-        [
-          {
-            object = pkgs.runCommand "nix-store-isos-reversed" {} ''
-              ${pkgs.utillinux}/bin/rev ${config.system.build.squashfsStore} > $out
-            '';
-            symlink = "/nix-store-isos";
-          }
-        ];
-    };
-
-    system.build.netbootIpxeScript = pkgs.writeTextDir "netboot.ipxe" ''
-      #!ipxe
-      kernel ${pkgs.stdenv.hostPlatform.platform.kernelTarget} init=${config.system.build.toplevel}/init initrd=initrd ${toString config.boot.kernelParams}
-      initrd initrd
-      boot
-    '';
-
-    system.build.ipxeBootDir = pkgs.symlinkJoin {
-      name = "ipxeBootDir";
-      paths = [
-        config.system.build.netbootRamdisk
-        config.system.build.kernel
-        config.system.build.netbootIpxeScript
-      ];
+        )}/initrd";
+        squashmanifest = "${pkgs.makeInitrd {
+          inherit (config.boot.initrd) compressor;
+          contents =
+            [
+              {
+                object = pkgs.runCommand "nix-store-isos-reversed" {} ''
+                  ${pkgs.utillinux}/bin/rev ${config.system.build.squashfsStore} > $out
+                '';
+                symlink = "/nix-store-isos";
+              }
+            ];
+        }}/initrd";
+      };
     };
 
     boot.loader.timeout = 10;
