@@ -4,10 +4,13 @@
 , pkgs
 ,
 }:
+let
+  cmdlineinitrds = builtins.concatStringsSep " " (builtins.map (name: "initrd=${name}") (builtins.attrNames initrds));
+in
 runCommand "netboot" {
   pxe = ''
     #!ipxe
-    kernel ${pkgs.stdenv.hostPlatform.platform.kernelTarget} init=${config.system.build.toplevel}/init initrd=initrd ${toString config.boot.kernelParams}
+    kernel ${pkgs.stdenv.hostPlatform.platform.kernelTarget} init=${config.system.build.toplevel}/init ${cmdlineinitrds} ${toString config.boot.kernelParams}
     ${builtins.concatStringsSep "\n" (builtins.attrValues (builtins.mapAttrs (name: path: "initrd ${name}") initrds))}
     initrd initrd
     boot
