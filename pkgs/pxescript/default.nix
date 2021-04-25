@@ -10,7 +10,7 @@ in
 runCommand "netboot" {
   pxe = ''
     #!ipxe
-    kernel ${pkgs.stdenv.hostPlatform.platform.kernelTarget} init=${config.system.build.toplevel}/init ${cmdlineinitrds} ${toString config.boot.kernelParams}
+    kernel ${pkgs.stdenv.hostPlatform.linux-kernel.target} init=${config.system.build.toplevel}/init ${cmdlineinitrds} ${toString config.boot.kernelParams}
     ${builtins.concatStringsSep "\n" (builtins.attrValues (builtins.mapAttrs (name: path: "initrd ${name}") initrds))}
     initrd initrd
     boot
@@ -19,7 +19,7 @@ runCommand "netboot" {
 } ''
   mkdir stage
   cd stage
-  ln -s "${config.system.build.kernel}/${pkgs.stdenv.hostPlatform.platform.kernelTarget}" ./
+  ln -s "${config.system.build.kernel}/${pkgs.stdenv.hostPlatform.linux-kernel.target}" ./
 
   set -x
   ${builtins.concatStringsSep "\n"
